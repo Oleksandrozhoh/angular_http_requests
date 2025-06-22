@@ -3,8 +3,8 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { Place } from '../place.model';
 import { PlacesComponent } from '../places.component';
 import { PlacesContainerComponent } from '../places-container/places-container.component';
-import { HttpClient } from '@angular/common/http';
-import { map } from 'rxjs';
+import { PlacesService } from '../places.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-available-places',
@@ -15,21 +15,19 @@ import { map } from 'rxjs';
 })
 export class AvailablePlacesComponent implements OnInit{
 
+  subscriptions: Subscription[] = [];
+
+  private placesService = inject(PlacesService);
   private onDestroyRef = inject(DestroyRef);
+
   isFetcing = signal(false); // Signal to track if data is being fetched for fallback content display in the template
   requestError = signal(false); // Signal to track if there was an error during the request
 
   places = signal<Place[] | undefined>(undefined);
 
-  private httpClient = inject(HttpClient);
-
   ngOnInit() {
     this.isFetcing.set(true);
-    const subscription = this.httpClient.get<{places: Place[]}>('http://localhost:3000/places',
-      //{observe: 'response',} allows to access the full HTTP response, including headers and status code (other options are 'body' and 'events')
-  ).pipe(
-    map((res)=> res.places) // Extract the 'places' array from the response with operator
-  ).subscribe({
+    const subscription = this.placesService.loadAvailablePlaces().subscribe({
       next: (places) => {
         //console.log('Available places:', places);
         this.places.set(places);
@@ -37,9 +35,8 @@ export class AvailablePlacesComponent implements OnInit{
       complete: () => {
         this.isFetcing.set(false); // Set fetching to false when the request completes to hide the fallback content
       },
-      error: (error) => {
-        console.error('Error fetching places:', error);
-         this.isFetcing.set(false); 
+      error: () => {
+        this.isFetcing.set(false); 
         this.requestError.set(true); 
       }
     }); 
@@ -48,4 +45,14 @@ export class AvailablePlacesComponent implements OnInit{
       subscription.unsubscribe();
     })
   }
+
+  onSelectPlace(place: Place) {
+   this.subscriptions.push(this.placesService.addPlaceToUserPlaces(place).subscribe({}));
+  }
+
+  // pattern to unsubscribe from all subscriptions when the component is destroyed used in myCHS
+  ngOnDestroy() {
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
+  }
+
 }
