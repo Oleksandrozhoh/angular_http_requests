@@ -3,12 +3,14 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Place } from './place.model';
 import { HttpClient } from '@angular/common/http';
 import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { ErrorService } from '../shared/error.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PlacesService {
   private httpClient = inject(HttpClient);
+  private errorService = inject(ErrorService);
   private userPlaces = signal<Place[]>([]);
 
   loadedUserPlaces = this.userPlaces.asReadonly();
@@ -45,6 +47,7 @@ export class PlacesService {
     map((res)=> res.places), // Extract the 'places' array from the response with operator
     catchError((error) => {
       console.log('Error fetching places: ' + error); // Log the error to the console
+      this.errorService.showError(errorMessage); // Show the error message using the ErrorService
       return throwError(() => new Error(errorMessage));
      } // Handle errors and throw a new error with better message
     )
