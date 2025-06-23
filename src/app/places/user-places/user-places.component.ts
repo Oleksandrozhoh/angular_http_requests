@@ -2,6 +2,7 @@ import { Component, DestroyRef, effect, inject, OnInit, signal } from '@angular/
 import { PlacesContainerComponent } from '../places-container/places-container.component';
 import { PlacesComponent } from '../places.component';
 import { PlacesService } from '../places.service';
+import { Place } from '../place.model';
 
 @Component({
   selector: 'app-user-places',
@@ -38,4 +39,11 @@ export class UserPlacesComponent implements OnInit {
     });
 
   }
+
+  onRemoveUserPlace(place: Place) {
+    const subscription = this.placesService.removeUserPlace(place).subscribe({});
+    this.onDestroyRef.onDestroy(() => {
+      subscription.unsubscribe(); // Unsubscribe from the request when the component is destroyed
+    });
+}
 }

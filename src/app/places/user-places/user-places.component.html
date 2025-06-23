@@ -4,7 +4,8 @@
   } @if (requestError()) {
   <p class="fallback-text">An error occurred while fetching places</p>
   } @if (places()) {
-  <app-places [places]="places()!" /> } @else if (places().length) {
+  <app-places [places]="places()!" (selectPlace)="onRemoveUserPlace($event)" />
+  } @else if (places().length) {
   <p class="fallback-text">Unfortunately, no places could be found.</p>
   }
 </app-places-container>

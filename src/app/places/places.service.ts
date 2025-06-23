@@ -33,12 +33,25 @@ export class PlacesService {
     return this.httpClient.put('http://localhost:3000/user-places', {placeId: place.id}, {observe: 'response'}).pipe(tap({
       error: (error) => {
         console.error('Error adding place to user places:', error);
+        this.errorService.showError('Failed to add place to user place');
         this.userPlaces.set(prevPlaces); // Revert to previous state on error
       }
     }));
   }
 
-  removeUserPlace(place: Place) {}
+  removeUserPlace(place: Place) {
+    const prevPlaces = this.userPlaces();
+    console.log('Removing place from user places. PlaceId: ', place);
+    this.userPlaces.set(prevPlaces.filter((each)=> each.id !== place.id));
+
+    return this.httpClient.delete(`http://localhost:3000/user-places/${place.id}`, {observe: 'response'}).pipe(tap({
+      error: (error) => {
+        console.error('Error removing place from user places:', error);
+        this.errorService.showError('Failed to remove place from user place');
+        this.userPlaces.set(prevPlaces); // Revert to previous state on error
+      }
+    }));
+  }
 
   private fetchPlaces(endpoint: string, errorMessage: string) : Observable<Place[]> {
     return this.httpClient.get<{places: Place[]}>(`http://localhost:3000${endpoint}` 
@@ -49,7 +62,7 @@ export class PlacesService {
       console.log('Error fetching places: ' + error); // Log the error to the console
       this.errorService.showError(errorMessage); // Show the error message using the ErrorService
       return throwError(() => new Error(errorMessage));
-     } // Handle errors and throw a new error with better message
+     } 
     )
   )
   }

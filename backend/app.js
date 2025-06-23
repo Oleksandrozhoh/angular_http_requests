@@ -66,6 +66,8 @@ app.put("/user-places", async (req, res) => {
 app.delete("/user-places/:id", async (req, res) => {
   const placeId = req.params.id;
 
+  //res.status(500).json(); // Simulating a server error for testing purposes
+
   const userPlacesFileContent = await fs.readFile("./data/user-places.json");
   const userPlacesData = JSON.parse(userPlacesFileContent);
 
